@@ -22,9 +22,6 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long bookingId;
-
-    //@ManyToOne
-    //private Users user; testcase has no user attribute
     private long concertId;
     private LocalDateTime date;
     @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.REMOVE})
