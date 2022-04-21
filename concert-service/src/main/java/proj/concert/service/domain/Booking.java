@@ -25,7 +25,7 @@ public class Booking {
     private long concertId;
     private LocalDateTime date;
     @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.REMOVE})
-    private List<Seat> seats = new ArrayList<>();
+    private List<Seat> seats = new ArrayList<>(); //set? no duplicates?
 
     public Booking() {
     }
