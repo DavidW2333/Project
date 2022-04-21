@@ -1,4 +1,4 @@
 package proj.concert.service.domain;
 
-public class Users {
+public class User {
 }

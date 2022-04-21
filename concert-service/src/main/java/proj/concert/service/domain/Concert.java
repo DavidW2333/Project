@@ -1,16 +1,13 @@
 package proj.concert.service.domain;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
 
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import proj.concert.common.dto.PerformerDTO;
 
 @Entity
 @Table(name = "CONCERTS")
@@ -36,7 +33,7 @@ public class Concert{
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "CONCERT_PERFORMER", joinColumns = @JoinColumn(name = "CONCERT_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "PERFORMER_ID", nullable = false))
     @Fetch(FetchMode.SUBSELECT)
-    private Set<Performers> performers = new HashSet<>();
+    private Set<Performer> performers = new HashSet<>();
 
     public Concert() {}
 
@@ -92,11 +89,11 @@ public class Concert{
         this.dates = dates;
     }
 
-    public Set<Performers> getPerformers() {
+    public Set<Performer> getPerformers() {
         return performers;
     }
 
-    public void setPerformers(Set<Performers> performers) {
+    public void setPerformers(Set<Performer> performers) {
         this.performers = performers;
     }
 

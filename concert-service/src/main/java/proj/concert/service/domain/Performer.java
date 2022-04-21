@@ -5,14 +5,12 @@ import javax.persistence.*;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.hibernate.annotations.Fetch;
-import proj.concert.common.dto.PerformerDTO;
 import proj.concert.common.types.Genre;
 
 
 @Entity
 @Table(name = "PERFORMERS")
-public class Performers implements Comparable<Performers> {
+public class Performer implements Comparable<Performer> {
 
     @Id
     @GeneratedValue
@@ -33,9 +31,9 @@ public class Performers implements Comparable<Performers> {
     @JoinColumn(name = "CONCERT_ID", nullable = false)
     private List<Concert> concerts = new ArrayList<>();
 
-    public Performers() {}
+    public Performer() {}
 
-    public Performers(Long id, String name, String imageName, Genre genre, String blrb) {
+    public Performer(Long id, String name, String imageName, Genre genre, String blrb) {
         this.id = id;
         this.name = name;
         this.imageName = imageName;
@@ -89,7 +87,7 @@ public class Performers implements Comparable<Performers> {
 
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        Performers other = (Performers) obj;
+        Performer other = (Performer) obj;
 
         return new EqualsBuilder()
                 .append(id, other.id)
@@ -110,7 +108,7 @@ public class Performers implements Comparable<Performers> {
     }
 
     @Override
-    public int compareTo(Performers other) {
+    public int compareTo(Performer other) {
         return other.getName().compareTo(getName());
     }
 

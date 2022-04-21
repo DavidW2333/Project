@@ -74,10 +74,10 @@ public class Seat{
 
 		if (o == null || getClass() != o.getClass()) return false;
 
-		SeatDTO seatDTO = (SeatDTO) o;
+		Seat seat = (Seat) o;
 
 		return new EqualsBuilder()
-				.append(label, seatDTO.label)
+				.append(label, seat.label)
 				.isEquals();
 	}
 
