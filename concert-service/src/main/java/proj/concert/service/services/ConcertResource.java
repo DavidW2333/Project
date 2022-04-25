@@ -22,10 +22,12 @@ public class ConcertResource {
 
         try{
             em.getTransaction().begin();
-            TypedQuery<User> users = em.createQuery("select a from User where a.username = :username and a.password = :password", User.class);
+            //USER has NOT YET completed!!!
+            //was using list before and got an error, asking me to use typedquery
+            TypedQuery<User> users = em.createQuery("select a from User a where a.username = :username and a.password = :password", User.class);
             users.setParameter("username", user.getUsername());
             users.setParameter("password", user.getPassword());
-            users.setLockMode(LockModeType.OPTIMISTIC);
+            users.setLockMode(LockModeType.OPTIMISTIC);//either optimistic or pessimistic
             em.getTransaction().commit();
 
         }
