@@ -15,10 +15,14 @@ public class User {
     @GeneratedValue
     private Long id;
 
-    @Column(unique = true)
+    @Column(name = "USERNAME", unique = true)
     private String username;
 
+    @Column(name = "PASSWORD")
     private String password;
+
+    @Column(name = "COOKIE")
+    private String cookie;
 
     protected User() {}
 
@@ -42,6 +46,11 @@ public class User {
     public Long getId() { return id; }
 
     public void setId(Long id) { this.id = id; }
+
+    public String getCookie() { return cookie; }
+
+    public void setCookie(String cookie) { this.cookie = cookie; }
+
 
     @Override
     public boolean equals(Object o) {
@@ -75,3 +84,4 @@ public class User {
 
 
 }
+

@@ -5,6 +5,7 @@ import proj.concert.common.dto.UserDTO;
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.User;
 import proj.concert.service.mapper.ConcertMapper;
+import proj.concert.service.config.Config;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -13,8 +14,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.Cookie;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Path("/concert-service")
 public class ConcertResource {
@@ -28,6 +32,7 @@ public class ConcertResource {
     @Path("/login")
     public Response login(UserDTO user){
         EntityManager em = p.createEntityManager();
+        Response response;
 
         try{
 
@@ -39,25 +44,24 @@ public class ConcertResource {
             users.setParameter("username", user.getUsername());
             users.setParameter("password", user.getPassword());
             users.setLockMode(LockModeType.OPTIMISTIC);//either optimistic or pessimistic
-            em.getTransaction().commit();
 
             User u = users.getSingleResult();
             if (u == null){
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
             else{
-                NewCookie newCookie = new NewCookie()
-
-                return Response.ok().cookie(newSesson(u,em)).build(); //session doesnt work
+                NewCookie newCookie = new NewCookie(Config.AUTH_COOKIE, UUID.randomUUID().toString());
+                u.setCookie(newCookie.getValue());
+                response = Response.ok().cookie(newCookie).build();
+                em.merge(u);
+                em.getTransaction().commit();
             }
-
-
-
         }
         finally{
             em.close();
         }
 
+        return response;
     }
     @GET
     @Path("/concerts/{id}")
@@ -79,8 +83,8 @@ public class ConcertResource {
 
 
     }
-"""
-    @GET
+
+ /*   @GET
     @Path("/concerts")
     public Response getAllConcerts(){
         EntityManager em = p.createEntityManager();
@@ -97,9 +101,8 @@ public class ConcertResource {
             //GenericEntity<List<String>> entity = new GenericEntity<List<String>>(list) {};
             //Response response = Response.ok(entity).build();
 
-        }
+        } */
 
-"""
 
 
 
