@@ -23,7 +23,7 @@ public class Concert{
     private String imageName;
 
     @Column(columnDefinition = "TEXT")
-    private String blrb;
+    private String blurb;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "CONCERT_DATES", joinColumns = @JoinColumn(name = "CONCERT_ID"))
@@ -41,7 +41,7 @@ public class Concert{
         this.id = id;
         this.title = title;
         this.imageName = imageName;
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     public Concert(String title, String imageName) {
@@ -74,11 +74,11 @@ public class Concert{
     }
 
     public String getBlurb() {
-        return blrb;
+        return blurb;
     }
 
     public void setBlurb(String blrb) {
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     public Set<LocalDateTime> getDates() {
