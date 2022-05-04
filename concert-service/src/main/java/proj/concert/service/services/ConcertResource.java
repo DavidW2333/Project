@@ -1,6 +1,7 @@
 package proj.concert.service.services;
 
 import proj.concert.common.dto.ConcertDTO;
+import proj.concert.common.dto.ConcertSummaryDTO;
 import proj.concert.common.dto.UserDTO;
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.User;
@@ -30,11 +31,11 @@ public class ConcertResource {
 
     @POST
     @Path("/login")
-    public Response login(UserDTO user){
+    public Response login(UserDTO user) {
         EntityManager em = p.createEntityManager();
-        Response response;
+        User u;
 
-        try{
+        try {
 
 
             em.getTransaction().begin();
@@ -45,69 +46,103 @@ public class ConcertResource {
             users.setParameter("password", user.getPassword());
             users.setLockMode(LockModeType.OPTIMISTIC);//either optimistic or pessimistic
 
-            User u = users.getSingleResult();
-            if (u == null){
+            u = users.getSingleResult();
+            if (u == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
-            }
-            else{
+            } else {
                 NewCookie newCookie = new NewCookie(Config.AUTH_COOKIE, UUID.randomUUID().toString());
                 u.setCookie(newCookie.getValue());
-                response = Response.ok().cookie(newCookie).build();
+                //response = Response.ok().cookie(newCookie).build();
                 em.merge(u);
                 em.getTransaction().commit();
+                return Response.ok().cookie(newCookie).build();
             }
-        }
-        finally{
+        } finally {
             em.close();
         }
 
-        return response;
+
     }
+
     @GET
     @Path("/concerts/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getConcertById(@PathParam("id") long id){
+    public Response getConcertById(@PathParam("id") long id) {
         EntityManager em = p.createEntityManager();
-        try{
+        try {
             em.getTransaction().begin();
             Concert concert = em.find(Concert.class, id);
             em.getTransaction().commit();
-            if (concert == null){
+            if (concert == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
             return Response.ok(ConcertMapper.toConcertDTO(concert)).build();
-        }
-        finally {
+        } finally {
             em.close();
         }
 
 
     }
 
- /*   @GET
+    @GET // Cannot invoke "java.util.List.size()" because "concerts" is null
     @Path("/concerts")
-    public Response getAllConcerts(){
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllConcerts() {
         EntityManager em = p.createEntityManager();
         List<ConcertDTO> dtoconcert = new ArrayList<>();
-        try{
+        try {
             em.getTransaction().begin();
             TypedQuery<Concert> concertQuery = em.createQuery("select a from Concert a", Concert.class);
+            concertQuery.setLockMode(LockModeType.PESSIMISTIC_READ);
             List<Concert> listconcert = concertQuery.getResultList();
-            for (Concert c : listconcert){
+
+            em.getTransaction().commit();
+            for (Concert c : listconcert) {
                 dtoconcert.add(ConcertMapper.toConcertDTO(c));
 
             }
+            return Response.ok(dtoconcert).build();
             //ist<String> list = new ArrayList<String>();
             //GenericEntity<List<String>> entity = new GenericEntity<List<String>>(list) {};
             //Response response = Response.ok(entity).build();
 
-        } */
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            }
+            em.close();
+        }
+    }
+
+    @GET
+    @Path("/concerts/summaries")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response GetConcertSummaries() {
+        EntityManager em = p.createEntityManager();
+        List<ConcertSummaryDTO> concertS = new ArrayList<>();
+        try {
+            em.getTransaction().begin();
+            TypedQuery<Concert> concertQ = em.createQuery("select a from Concert a", Concert.class);
+            concertQ.setLockMode(LockModeType.PESSIMISTIC_READ);
+            List<Concert> concerts = concertQ.getResultList();
+            if (concerts.isEmpty()) {
+                return Response.noContent().build();
+            }
+            for (Concert c : concerts) {
+                concertS.add(ConcertMapper.toConcertSummaryDTO(c));
+            }
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+
+            }
+            em.close();
+
+        }
+        return Response.ok(concertS).build();
 
 
+        // TODO Implement this.
 
-
-
-
-    // TODO Implement this.
-
+    }
 }
