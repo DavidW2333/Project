@@ -33,20 +33,19 @@ public class ConcertResource {
     @Path("/login")
     public Response login(UserDTO user) {
         EntityManager em = p.createEntityManager();
-        User u;
+        User u = null;
 
         try {
-
-
             em.getTransaction().begin();
             //USER has NOT YET completed!!!
             //was using list before and got an error, asking me to use typedquery
             TypedQuery<User> users = em.createQuery("select a from User a where a.username = :username and a.password = :password", User.class);
             users.setParameter("username", user.getUsername());
             users.setParameter("password", user.getPassword());
-            users.setLockMode(LockModeType.OPTIMISTIC);//either optimistic or pessimistic
+            users.setLockMode(LockModeType.PESSIMISTIC_READ);//either optimistic or pessimistic
 
-            u = users.getSingleResult();
+            u = users.getResultList().stream().findFirst().orElse(null);
+
             if (u == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             } else {
@@ -58,6 +57,9 @@ public class ConcertResource {
                 return Response.ok().cookie(newCookie).build();
             }
         } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            }
             em.close();
         }
 
@@ -88,7 +90,7 @@ public class ConcertResource {
     @Path("/concerts")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllConcerts() {
-        EntityManager em = p.createEntityManager();
+        EntityManager em = PersistenceManager.instance().createEntityManager();
         List<ConcertDTO> dtoconcert = new ArrayList<>();
         try {
             em.getTransaction().begin();
@@ -99,7 +101,6 @@ public class ConcertResource {
             em.getTransaction().commit();
             for (Concert c : listconcert) {
                 dtoconcert.add(ConcertMapper.toConcertDTO(c));
-
             }
             return Response.ok(dtoconcert).build();
             //ist<String> list = new ArrayList<String>();
@@ -117,7 +118,7 @@ public class ConcertResource {
     @GET
     @Path("/concerts/summaries")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response GetConcertSummaries() {
+    public Response getConcertSummaries() {
         EntityManager em = p.createEntityManager();
         List<ConcertSummaryDTO> concertS = new ArrayList<>();
         try {
@@ -134,15 +135,13 @@ public class ConcertResource {
         } finally {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().commit();
-
             }
             em.close();
 
         }
         return Response.ok(concertS).build();
 
-
-        // TODO Implement this.
-
     }
+    // TODO Implement this.
+
 }
