@@ -30,7 +30,7 @@ public class Concert{
     @Column(name = "DATE")
     private Set<LocalDateTime> dates = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "CONCERT_PERFORMER", joinColumns = @JoinColumn(name = "CONCERT_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "PERFORMER_ID", nullable = false))
     @Fetch(FetchMode.SUBSELECT)
     private Set<Performer> performers = new HashSet<>();

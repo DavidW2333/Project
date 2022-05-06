@@ -13,7 +13,7 @@ import proj.concert.common.types.Genre;
 public class Performer implements Comparable<Performer> {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -25,11 +25,11 @@ public class Performer implements Comparable<Performer> {
     private Genre genre;
 
     @Column(columnDefinition = "TEXT")
-    private String blrb;
+    private String blurb;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "CONCERT_ID", nullable = false)
-    private List<Concert> concerts = new ArrayList<>();
+    private Set<Concert> concerts = new HashSet<>();
 
     public Performer() {}
 
@@ -38,7 +38,7 @@ public class Performer implements Comparable<Performer> {
         this.name = name;
         this.imageName = imageName;
         this.genre = genre;
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     public Long getId() {
@@ -74,11 +74,11 @@ public class Performer implements Comparable<Performer> {
     }
 
     public String getBlurb() {
-        return blrb;
+        return blurb;
     }
 
     public void setBlurb(String blrb) {
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     @Override
