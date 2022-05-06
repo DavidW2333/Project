@@ -32,7 +32,7 @@ public class Concert{
     @Column(name = "DATE")
     private Set<LocalDateTime> dates = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST) //eager fetching or else error
     @JoinTable(name = "CONCERT_PERFORMER", joinColumns = @JoinColumn(name = "CONCERT_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "PERFORMER_ID", nullable = false))
     @Fetch(FetchMode.SUBSELECT)
     @Column(name = "PERFORMER")
