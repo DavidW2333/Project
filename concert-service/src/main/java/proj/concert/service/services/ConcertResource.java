@@ -27,10 +27,9 @@ import java.util.UUID;
 
 @Path("/concert-service")
 public class ConcertResource {
-    //private static Logger LOGGER = LoggerFactory.getLogger(ConcertUtils.class);
-    //private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
+
     PersistenceManager p = PersistenceManager.instance();
-    //EntityManager em = PersistenceManager.instance().createEntityManager();
+
 
 
     @POST
@@ -47,7 +46,8 @@ public class ConcertResource {
             users.setParameter("username", user.getUsername());
             users.setParameter("password", user.getPassword());
             users.setLockMode(LockModeType.PESSIMISTIC_READ);//either optimistic or pessimistic
-
+            //u = users.getSingleResult();
+            //use this query em.createQuery("...").getResultStream().findFirst().orElse(null); java 8 stackoverflow
             u = users.getResultList().stream().findFirst().orElse(null);
 
             if (u == null) {
@@ -70,25 +70,6 @@ public class ConcertResource {
 
     }
 
-    /*@GET
-    @Path("/concerts/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getConcertById(@PathParam("id") long id) {
-        EntityManager em = p.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            Concert concert = em.find(Concert.class, id);
-            em.getTransaction().commit();
-            if (concert == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            return Response.ok(ConcertMapper.toConcertDTO(concert)).build();
-        } finally {
-            em.close();
-        }
-
-
-    }*/
 
     @GET // Cannot invoke "java.util.List.size()" because "concerts" is null
     @Path("/concerts")
@@ -156,7 +137,7 @@ public class ConcertResource {
 
         try {
             em.getTransaction().begin();
-            concert = em.find(Concert.class, id);
+            concert = em.find(Concert.class, id, LockModeType.PESSIMISTIC_READ);
 
             if (concert == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();

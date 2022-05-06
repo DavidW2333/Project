@@ -14,20 +14,24 @@ public class Performer implements Comparable<Performer> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID")
     private Long id;
 
+
+    @Column(name = "NAME")
     private String name;
 
     @Column(name = "IMAGE_NAME")
     private String imageName;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "GENRE")
     private Genre genre;
 
-    @Column(name = "BLURB", columnDefinition = "TEXT")
+    @Column(name="BLURB", length = 1024)
     private String blurb;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "CONCERT_ID", nullable = false)
     private Set<Concert> concerts = new HashSet<>();
 

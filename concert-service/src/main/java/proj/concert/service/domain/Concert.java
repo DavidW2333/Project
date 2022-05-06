@@ -15,14 +15,16 @@ public class Concert{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID", nullable = false, unique = true)
     private Long id;
 
+    @Column(name = "TITLE")
     private String title;
 
     @Column(name = "IMAGE_NAME")
     private String imageName;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name="BLURB", length=1024)
     private String blurb;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -33,15 +35,23 @@ public class Concert{
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "CONCERT_PERFORMER", joinColumns = @JoinColumn(name = "CONCERT_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "PERFORMER_ID", nullable = false))
     @Fetch(FetchMode.SUBSELECT)
-    private Set<Performer> performers = new HashSet<>();
-
+    @Column(name = "PERFORMER")
+    private Set<Performer> performers;
     public Concert() {}
 
+    public Concert(Long id, String title, String imageName, String blrb, Set<Performer> performers) {
+        this.id = id;
+        this.title = title;
+        this.imageName = imageName;
+        this.blurb = blrb;
+        this.performers = performers;
+    }
     public Concert(Long id, String title, String imageName, String blrb) {
         this.id = id;
         this.title = title;
         this.imageName = imageName;
         this.blurb = blrb;
+        //this.performers = performers;
     }
 
     public Concert(String title, String imageName) {
@@ -90,7 +100,7 @@ public class Concert{
     }
 
     public Set<Performer> getPerformers() {
-        return performers;
+        return this.performers;
     }
 
     public void setPerformers(Set<Performer> performers) {
