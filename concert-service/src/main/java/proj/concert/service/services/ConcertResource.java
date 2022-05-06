@@ -1,29 +1,34 @@
 package proj.concert.service.services;
 
-import proj.concert.common.dto.ConcertDTO;
-import proj.concert.common.dto.ConcertSummaryDTO;
-import proj.concert.common.dto.UserDTO;
-import proj.concert.common.dto.PerformerDTO;
+import proj.concert.common.dto.*;
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.User;
 import proj.concert.service.domain.Performer;
+import proj.concert.service.jaxrs.LocalDateTimeParam;
 import proj.concert.service.mapper.ConcertMapper;
 import proj.concert.service.config.Config;
 import proj.concert.service.mapper.PerformerMapper;
+import proj.concert.common.types.BookingStatus;
+import proj.concert.service.mapper.SeatMapper;
+import proj.concert.service.domain.Seat;
+
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.TypedQuery;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.*;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Cookie;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 @Path("/concert-service")
 public class ConcertResource {
@@ -197,6 +202,40 @@ public class ConcertResource {
             } em.close();
         } return Response.ok(PerformerMapper.toPerformerDTO(performer)).build();
     }
+
+    @GET
+    @Path("/seats/{date}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSeats(@PathParam("date") LocalDateTimeParam dTP, @QueryParam("status") BookingStatus stat) {
+
+        List<SeatDTO> seatList = new ArrayList<SeatDTO>();
+        EntityManager em = p.createEntityManager();
+
+        try {
+            em.getTransaction().begin();
+            TypedQuery<Seat> seatQuery = em.createQuery("select s from Seat s where s.date=:date", Seat.class);
+            seatQuery.setParameter("date", dTP.getLocalDateTime());
+            seatQuery.setLockMode(LockModeType.PESSIMISTIC_READ);
+
+            List<Seat> seatList1 = seatQuery.getResultList();
+
+            em.getTransaction().commit();
+
+            for (Seat s:seatList1) {
+                if (stat.equals(BookingStatus.Any) || (stat.equals(BookingStatus.Unbooked) && !s.isBooked()) || (stat.equals(BookingStatus.Booked) && s.isBooked())) {
+                    seatList.add(SeatMapper.toDTO(s));
+                }
+            }
+            GenericEntity<List<SeatDTO>> entity = new GenericEntity<List<SeatDTO>>(seatList) {};
+            return Response.ok(entity).build();
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            } em.close();
+        }
+
+    }
+
 
     // TODO Implement this.
 
