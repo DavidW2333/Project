@@ -24,7 +24,7 @@ public class Performer implements Comparable<Performer> {
     @Enumerated(EnumType.STRING)
     private Genre genre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "BLURB", columnDefinition = "TEXT")
     private String blurb;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
