@@ -25,7 +25,7 @@ public class Performer implements Comparable<Performer> {
     private Genre genre;
 
     @Column(columnDefinition = "TEXT")
-    private String blrb;
+    private String blurb;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "CONCERT_ID", nullable = false)
@@ -38,7 +38,7 @@ public class Performer implements Comparable<Performer> {
         this.name = name;
         this.imageName = imageName;
         this.genre = genre;
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     public Long getId() {
@@ -74,11 +74,11 @@ public class Performer implements Comparable<Performer> {
     }
 
     public String getBlurb() {
-        return blrb;
+        return blurb;
     }
 
     public void setBlurb(String blrb) {
-        this.blrb = blrb;
+        this.blurb = blrb;
     }
 
     @Override

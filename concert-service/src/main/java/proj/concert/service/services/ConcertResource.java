@@ -3,11 +3,15 @@ package proj.concert.service.services;
 import proj.concert.common.dto.ConcertDTO;
 import proj.concert.common.dto.ConcertSummaryDTO;
 import proj.concert.common.dto.UserDTO;
+import proj.concert.common.dto.PerformerDTO;
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.User;
+import proj.concert.service.domain.Performer;
 import proj.concert.service.mapper.ConcertMapper;
 import proj.concert.service.config.Config;
+import proj.concert.service.mapper.PerformerMapper;
 
+import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.TypedQuery;
@@ -66,7 +70,7 @@ public class ConcertResource {
 
     }
 
-    @GET
+    /*@GET
     @Path("/concerts/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getConcertById(@PathParam("id") long id) {
@@ -84,7 +88,7 @@ public class ConcertResource {
         }
 
 
-    }
+    }*/
 
     @GET // Cannot invoke "java.util.List.size()" because "concerts" is null
     @Path("/concerts")
@@ -142,6 +146,77 @@ public class ConcertResource {
         return Response.ok(concertS).build();
 
     }
+
+    @GET
+    @Path("/concerts/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getConcertById(@PathParam("id") long id) {
+        EntityManager em = p.createEntityManager();
+        Concert concert;
+
+        try {
+            em.getTransaction().begin();
+            concert = em.find(Concert.class, id);
+
+            if (concert == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            }
+            em.close();
+        } return Response.ok(ConcertMapper.toConcertDTO(concert)).build();
+    }
+
+    @GET
+    @Path("/performers")
+    public Response getAllPerformers() {
+        EntityManager em = p.createEntityManager();
+        List<PerformerDTO> performerS = new ArrayList<>();
+        try {
+            em.getTransaction().begin();
+            TypedQuery<Performer> performerQ = em.createQuery("SELECT p FROM Performer p", Performer.class);
+            performerQ.setLockMode(LockModeType.PESSIMISTIC_READ);
+            List<Performer> performers = performerQ.getResultList();
+
+            em.getTransaction().commit();
+
+            if (performers.isEmpty()) {
+                return Response.noContent().build();
+            }
+
+            for (Performer p: performers) {
+                performerS.add(PerformerMapper.toPerformerDTO(p));
+            }
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            }
+            em.close();
+        }
+        return Response.ok(performerS).build();
+    }
+
+    @GET
+    @Path("/performers/{id}")
+    public Response getPerformers(@PathParam("id") long id) {
+        EntityManager em = p.createEntityManager();
+        Performer performer;
+        try {
+            em.getTransaction().begin();
+            performer = em.find(Performer.class, id);
+
+            if (performer == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            } em.close();
+        } return Response.ok(PerformerMapper.toPerformerDTO(performer)).build();
+    }
+
     // TODO Implement this.
 
 }
