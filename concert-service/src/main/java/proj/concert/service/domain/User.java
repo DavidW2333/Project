@@ -24,6 +24,10 @@ public class User {
     @Column(name = "COOKIE")
     private String cookie;
 
+    @Column(name = "VERSION")
+    @Version
+    private Long version;
+
     protected User() {}
 
     public User(String username, String password) {
@@ -50,6 +54,10 @@ public class User {
     public String getCookie() { return cookie; }
 
     public void setCookie(String cookie) { this.cookie = cookie; }
+
+    public Long getVersion() { return this.version; }
+
+    public void setVersion(Long version) { this.version = version; }
 
 
     @Override
