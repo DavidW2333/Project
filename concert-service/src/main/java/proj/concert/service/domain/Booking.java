@@ -24,16 +24,20 @@ public class Booking {
     private long bookingId;
     private long concertId;
     private LocalDateTime date;
+
+    @ManyToOne
+    private User user;
     @OneToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL, CascadeType.REMOVE})
-    private List<Seat> seats = new ArrayList<>(); //set? no duplicates?
+    private Set<Seat> seats = new HashSet<>(); //set? no duplicates?
 
     public Booking() {
     }
 
-    public Booking(long concertId, LocalDateTime date, List<Seat> seats) {
+    public Booking(long concertId, LocalDateTime date, Set<Seat> seats, User user) {
         this.concertId = concertId;
         this.date = date;
         this.seats = seats;
+        this.user = user;
     }
 
     public LocalDateTime getDate() {
@@ -50,13 +54,15 @@ public class Booking {
         this.concertId = concertId;
     }
 
+    public long getId() { return this.bookingId; }
 
+    public User getUser() { return this.user; }
 
-    public List<Seat> getSeats() {
+    public Set<Seat> getSeats() {
         return seats;
     }
 
-    public void setSeats(List<Seat> seats) {
+    public void setSeats(Set<Seat> seats) {
         this.seats = seats;
     }
 
