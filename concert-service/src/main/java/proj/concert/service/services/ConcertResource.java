@@ -163,6 +163,7 @@ public class ConcertResource {
 
     @GET
     @Path("/performers")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getAllPerformers() {
         EntityManager em = p.createEntityManager();
         List<PerformerDTO> performerS = new ArrayList<>();
@@ -192,6 +193,7 @@ public class ConcertResource {
 
     @GET
     @Path("/performers/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getPerformers(@PathParam("id") long id) {
         EntityManager em = p.createEntityManager();
         Performer performer;
@@ -248,6 +250,7 @@ public class ConcertResource {
 
     @POST
     @Path("/bookings")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response makeBooking(BookingRequestDTO bookingRequestDTO, @CookieParam(Config.AUTH_COOKIE) Cookie cookieId) {
         if (cookieId == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -328,6 +331,7 @@ public class ConcertResource {
 
     @GET
     @Path("/bookings/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getBookingById(@PathParam("id") long id, @CookieParam(Config.AUTH_COOKIE) Cookie cookieId) {
         if (cookieId == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -370,6 +374,7 @@ public class ConcertResource {
 
     @GET
     @Path("/bookings")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getAllUserBookings(@CookieParam(Config.AUTH_COOKIE) Cookie cookieId) {
         if (cookieId == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
