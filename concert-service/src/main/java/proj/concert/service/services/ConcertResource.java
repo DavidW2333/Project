@@ -11,6 +11,7 @@ import proj.concert.service.mapper.PerformerMapper;
 import proj.concert.common.types.BookingStatus;
 import proj.concert.service.mapper.SeatMapper;
 import proj.concert.service.domain.Seat;
+import proj.concert.service.domain.Booking;
 
 
 import javax.persistence.Entity;
@@ -27,8 +28,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import java.net.URI;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Path("/concert-service")
 public class ConcertResource {
@@ -234,6 +240,82 @@ public class ConcertResource {
             } em.close();
         }
 
+    }
+
+    private NewCookie appendCookie(Cookie clientCookie) {
+        return new NewCookie(Config.AUTH_COOKIE, clientCookie.getValue());
+    }
+
+    @POST
+    @Path("/bookings")
+    public Response makeBooking(BookingRequestDTO bookingRequestDTO, @CookieParam(Config.AUTH_COOKIE) Cookie cookieId) {
+        if (cookieId == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        if(bookingRequestDTO.getSeatLabels().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        EntityManager em = p.createEntityManager();
+
+        try {
+            em.getTransaction().begin();
+
+            Concert concert = em.find(Concert.class, bookingRequestDTO.getConcertId(), LockModeType.PESSIMISTIC_READ);
+
+            em.getTransaction().commit();
+
+            if (concert == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+
+            if (!concert.getDates().contains(bookingRequestDTO.getDate())) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+
+            em.getTransaction().begin();
+
+            TypedQuery<Seat> seatQuery = em.createQuery("select s from Seat s where s.label in :label and s.date = :date and s.isBooked = false", Seat.class);
+            seatQuery.setParameter("label", bookingRequestDTO.getSeatLabels());
+            seatQuery.setParameter("date", bookingRequestDTO.getDate());
+            seatQuery.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+            List<Seat> freeRequestedSeats = seatQuery.getResultList();
+
+            if (freeRequestedSeats.size() != bookingRequestDTO.getSeatLabels().size()) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            Set<Seat> seatsSet = new HashSet<>();
+
+            for (Seat s : freeRequestedSeats) {
+                s.setBooked(true);
+                seatsSet.add(s);
+            }
+
+            Booking booking = new Booking(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate(), seatsSet);
+            em.persist(booking);
+
+            int freeSeats = em.createQuery("SELECT COUNT(s) FROM Seat s WHERE s.date = :date AND s.isBooked = false", Long.class)
+                    .setParameter("date", bookingRequestDTO.getDate())
+                    .getSingleResult()
+                    .intValue();
+
+            int allSeats = em.createQuery("SELECT COUNT(s) FROM Seat s WHERE s.date = :date", Long.class)
+                    .setParameter("date", bookingRequestDTO.getDate())
+                    .getSingleResult()
+                    .intValue();
+
+            this.alertSubscribers(freeSeats, allSeats, bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate());
+
+            em.getTransaction().commit();
+
+            return Response.created(URI.create("concert-service/bookings/"+booking.getId())).cookie(appendCookie(cookieId)).build();
+        } finally {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().commit();
+            } em.close();
+        }
     }
 
 
