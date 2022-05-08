@@ -34,12 +34,15 @@ import java.net.URI;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Path("/concert-service")
 public class ConcertResource {
 
     PersistenceManager p = PersistenceManager.instance();
     private static final Map<Long, List<Subscription>> subscribersMap = new ConcurrentHashMap<>();
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
 
 
@@ -406,6 +409,47 @@ public class ConcertResource {
                 em.getTransaction().commit();
             } em.close();
         }
+    }
+
+    @POST
+    @Path("/subscribe/concertInfo")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public void getConcertInfo(@Suspended AsyncResponse response, @CookieParam(Config.AUTH_COOKIE) Cookie cookieId, ConcertInfoSubscriptionDTO infoDTO) {
+        EntityManager em = p.createEntityManager();
+
+        try {
+            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
+                    .setParameter("cookie", cookieId.getValue());
+            User user = userQuery.getResultList().stream().findFirst().orElse(null);
+
+            if (user == null) {
+                response.resume(Response.status(Response.Status.UNAUTHORIZED).build());
+                return;
+            }
+
+            em.getTransaction().begin();
+
+            Concert concert = em.find(Concert.class, infoDTO.getConcertId(), LockModeType.PESSIMISTIC_READ);
+
+            if (concert == null || concert.getDates().contains(infoDTO.getDate())) {
+                response.resume(Response.status(Response.Status.BAD_REQUEST).build());
+                return;
+            }
+
+            em.getTransaction().commit();
+
+        } finally {
+            em.close();
+        }
+
+        synchronized (subscribersMap) {
+            if (!subscribersMap.containsKey(infoDTO.getDate())) {
+                subscribersMap.put(infoDTO.getConcertId(), new LinkedList<>());
+            }
+        }
+        subscribersMap.get(infoDTO.getDate()).add(new Subscription(infoDTO, response));
+
     }
 
     public void alertSubscribers(int availableNumberOfSeats, int totalNumberOfSeats, long concertId, LocalDateTime date){
