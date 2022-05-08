@@ -66,7 +66,7 @@ public class ConcertResource {
             if (u == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             } else {
-                NewCookie newCookie = new NewCookie(Config.AUTH_COOKIE, UUID.randomUUID().toString());
+                NewCookie newCookie = new NewCookie(Config.AUTH_COOKIE, UUID.randomUUID().toString()); //either UUID or we can store the Username for the cookie value
                 u.setCookie(newCookie.getValue());
                 em.merge(u);
                 em.getTransaction().commit();
@@ -93,13 +93,13 @@ public class ConcertResource {
         List<ConcertDTO> dtoconcert = new ArrayList<>();
         try {
             em.getTransaction().begin();
-            TypedQuery<Concert> concertQuery = em.createQuery("select a from Concert a", Concert.class);
+            TypedQuery<Concert> concertQuery = em.createQuery("select a from Concert a", Concert.class); //retrieve concerts
             concertQuery.setLockMode(LockModeType.PESSIMISTIC_READ);
             List<Concert> listconcert = concertQuery.getResultList();
 
             em.getTransaction().commit();
             for (Concert c : listconcert) {
-                dtoconcert.add(ConcertMapper.toConcertDTO(c));
+                dtoconcert.add(ConcertMapper.toConcertDTO(c)); //connects with dto
             }
             return Response.ok(dtoconcert).build();
 
@@ -117,7 +117,7 @@ public class ConcertResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getConcertSummaries() {
         EntityManager em = p.createEntityManager();
-        List<ConcertSummaryDTO> concertS = new ArrayList<>();
+        List<ConcertSummaryDTO> concertS = new ArrayList<>(); //store all the concerts after being "converted" into the dto
         try {
             em.getTransaction().begin();
             TypedQuery<Concert> concertQ = em.createQuery("select a from Concert a", Concert.class);
@@ -163,7 +163,9 @@ retrieve concerts by a specific id
             em.close();
         } return Response.ok(ConcertMapper.toConcertDTO(concert)).build();
     }
-
+/*
+retrieve all the performers
+ */
     @GET
     @Path("/performers")
     @Produces(MediaType.APPLICATION_JSON)
@@ -193,6 +195,8 @@ retrieve concerts by a specific id
         }
         return Response.ok(performerS).build();
     }
+/*retrieve performers by a specific ID
+*/
 
     @GET
     @Path("/performers/{id}")
@@ -202,9 +206,9 @@ retrieve concerts by a specific id
         Performer performer;
         try {
             em.getTransaction().begin();
-            performer = em.find(Performer.class, id);
+            performer = em.find(Performer.class, id); //find the performer in the performer class
 
-            if (performer == null) {
+            if (performer == null) { //if performer doesnt exist
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
         } finally {
