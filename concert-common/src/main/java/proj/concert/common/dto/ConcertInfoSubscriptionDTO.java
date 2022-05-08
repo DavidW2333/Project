@@ -41,7 +41,8 @@ public class ConcertInfoSubscriptionDTO {
     public void setConcertId(long concertId) {
         this.concertId = concertId;
     }
-
+    @JsonSerialize(contentUsing = LocalDateTimeSerializer.class)
+    @JsonDeserialize(contentUsing = LocalDateTimeDeserializer.class)
     public LocalDateTime getDate() {
         return date;
     }

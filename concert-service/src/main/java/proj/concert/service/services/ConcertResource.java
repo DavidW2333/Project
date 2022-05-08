@@ -34,18 +34,20 @@ import java.net.URI;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import static proj.concert.service.util.TheatreLayout.NUM_SEATS_IN_THEATRE;
 
 @Path("/concert-service")
 public class ConcertResource {
 
     PersistenceManager p = PersistenceManager.instance();
     private static final Map<Long, List<Subscription>> subscribersMap = new ConcurrentHashMap<>();
-    private ExecutorService executorService = Executors.newCachedThreadPool();
 
 
-
+/*
+-using fetch eager as database needs to load all the entities for users to view
+-using fetch lazy will cause an error!
+ */
     @POST
     @Path("/login")
     public Response login(UserDTO user) {
@@ -53,14 +55,11 @@ public class ConcertResource {
         User u = null;
 
         try {
-            em.getTransaction().begin();
-            //USER has NOT YET completed!!!
-            //was using list before and got an error, asking me to use typedquery
+            em.getTransaction().begin(); // start a new transaction
             TypedQuery<User> users = em.createQuery("select a from User a where a.username = :username and a.password = :password", User.class);
             users.setParameter("username", user.getUsername());
             users.setParameter("password", user.getPassword());
             users.setLockMode(LockModeType.PESSIMISTIC_READ);//either optimistic or pessimistic
-            //u = users.getSingleResult();
             //use this query em.createQuery("...").getResultStream().findFirst().orElse(null); java 8 stackoverflow
             u = users.getResultList().stream().findFirst().orElse(null);
 
@@ -69,7 +68,6 @@ public class ConcertResource {
             } else {
                 NewCookie newCookie = new NewCookie(Config.AUTH_COOKIE, UUID.randomUUID().toString());
                 u.setCookie(newCookie.getValue());
-                //response = Response.ok().cookie(newCookie).build();
                 em.merge(u);
                 em.getTransaction().commit();
                 return Response.ok().cookie(newCookie).build();
@@ -83,9 +81,11 @@ public class ConcertResource {
 
 
     }
+/*
+-retrieve all the concerts
+ */
 
-
-    @GET // Cannot invoke "java.util.List.size()" because "concerts" is null
+    @GET
     @Path("/concerts")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllConcerts() {
@@ -102,9 +102,7 @@ public class ConcertResource {
                 dtoconcert.add(ConcertMapper.toConcertDTO(c));
             }
             return Response.ok(dtoconcert).build();
-            //ist<String> list = new ArrayList<String>();
-            //GenericEntity<List<String>> entity = new GenericEntity<List<String>>(list) {};
-            //Response response = Response.ok(entity).build();
+
 
         } finally {
             if (em.getTransaction().isActive()) {
@@ -141,7 +139,9 @@ public class ConcertResource {
         return Response.ok(concertS).build();
 
     }
-
+/*
+retrieve concerts by a specific id
+ */
     @GET
     @Path("/concerts/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -231,7 +231,7 @@ public class ConcertResource {
             List<Seat> seatList1 = seatQuery.getResultList();
 
             em.getTransaction().commit();
-
+            //checking if the seats are available or not
             for (Seat s:seatList1) {
                 if (stat.equals(BookingStatus.Any) || (stat.equals(BookingStatus.Unbooked) && !s.isBooked()) || (stat.equals(BookingStatus.Booked) && s.isBooked())) {
                     seatList.add(SeatMapper.toDTO(s));
@@ -250,7 +250,11 @@ public class ConcertResource {
     private NewCookie appendCookie(Cookie clientCookie) {
         return new NewCookie(Config.AUTH_COOKIE, clientCookie.getValue());
     }
+/*
+-POST method
+-try to make a booking
 
+ */
     @POST
     @Path("/bookings")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -271,7 +275,7 @@ public class ConcertResource {
             TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
                     .setParameter("cookie", cookieId.getValue());
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
-
+            // when user is not authenticated
             if (user == null ) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
@@ -279,17 +283,17 @@ public class ConcertResource {
             Concert concert = em.find(Concert.class, bookingRequestDTO.getConcertId(), LockModeType.PESSIMISTIC_READ);
 
             em.getTransaction().commit();
-
+            //when concert is wrong
             if (concert == null) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-
+            // when date is wrong
             if (!concert.getDates().contains(bookingRequestDTO.getDate())) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
 
             em.getTransaction().begin();
-
+            //get the list of seats
             TypedQuery<Seat> seatQuery = em.createQuery("select s from Seat s where s.label in :label and s.date = :date and s.isBooked = false", Seat.class);
             seatQuery.setParameter("label", bookingRequestDTO.getSeatLabels());
             seatQuery.setParameter("date", bookingRequestDTO.getDate());
@@ -331,6 +335,10 @@ public class ConcertResource {
             } em.close();
         }
     }
+    /*
+    -Get method
+    -get the booking by a specific ID
+     */
 
     @GET
     @Path("/bookings/{id}")
@@ -348,6 +356,7 @@ public class ConcertResource {
             Booking booking = em.find(Booking.class, id, LockModeType.PESSIMISTIC_READ);
 
             em.getTransaction().commit();
+            //get the user
 
             TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
                     .setParameter("cookie", cookieId.getValue());
@@ -357,7 +366,6 @@ public class ConcertResource {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
-            //Booking booking = em.find(Booking.class, id);
             if (booking == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -374,7 +382,9 @@ public class ConcertResource {
             } em.close();
         }
     }
-
+/*
+Get the booking by the cookie param
+ */
     @GET
     @Path("/bookings")
     @Produces(MediaType.APPLICATION_JSON)
@@ -402,6 +412,7 @@ public class ConcertResource {
             for (Booking booking : bookingList) {
                 dtoBookList.add(BookingMapper.toDTO(booking));
             }
+            //or we can return a dto bookinglist as a response;
             GenericEntity<List<BookingDTO>> entity = new GenericEntity<List<BookingDTO>>(dtoBookList) {};
             return Response.ok(entity).build();
         } finally {
@@ -420,7 +431,7 @@ public class ConcertResource {
 
         try {
             TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
-                    .setParameter("cookie", cookieId.getValue());
+                    .setParameter("cookie", cookieId.getValue()); //get the user
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
 
             if (user == null) {
@@ -452,8 +463,10 @@ public class ConcertResource {
 
     }
 
+
     public void alertSubscribers(int availableNumberOfSeats, int totalNumberOfSeats, long concertId, LocalDateTime date){
         List<Subscription> subscriberList = subscribersMap.get(concertId);
+        int amountbooked = 100 - (int)(((double)availableNumberOfSeats / NUM_SEATS_IN_THEATRE) * 100);
         if (subscriberList == null) {
             return;
         }
@@ -463,7 +476,7 @@ public class ConcertResource {
         for (Subscription subscriber : subscriberList) {
             ConcertInfoSubscriptionDTO concertInfoSubscriptionDTO = subscriber.getConcertInfoSubscriptionDTO();
             if (concertInfoSubscriptionDTO.getDate().isEqual(date)){
-                if (concertInfoSubscriptionDTO.getPercentageBooked() < 100 - availableNumberOfSeats * 100 / totalNumberOfSeats) {
+                if (concertInfoSubscriptionDTO.getPercentageBooked() < amountbooked) {
                     AsyncResponse response = subscriber.getResponse();
 
                     synchronized (response) {

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-//@Table(name = "BOOKING")
+
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
