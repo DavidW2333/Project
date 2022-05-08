@@ -15,6 +15,7 @@ This is what each team member in this group has contributed to this project:
 
 When we first started this project, we have discussed and came into an agreement that all of us will do some parts of each section(Domain,
 mapper, and service), which is why there are commits from all of our teammates for domain model. We have constructed our domain model based on the 
-concert-common/dto class, ConcertResourceIT class(the testing case so that we know what variable we need to add) and the database(for the annotation)
+concert-common/dto class, ConcertResourceIT class(the testing case so that we know what variable we need to add) and the database(for the annotation).
 
-As for the concurrency issue.....
+As for the concurrency issue, 3 of the subscription test were not working hence we were not able to implement any concurrency measures for those test. We tried handling the 
+concurrency issue through pessimistic locking as is implemented in many of the APIs. The read locks can be obtained and read when needed. 

@@ -318,11 +318,13 @@ retrieve all the performers
             Booking booking = new Booking(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate(), seatSet, user);
             em.persist(booking);
 
+            //number of free seats
             int freeSeats = em.createQuery("SELECT COUNT(s) FROM Seat s WHERE s.date = :date AND s.isBooked = false", Long.class)
                     .setParameter("date", bookingRequestDTO.getDate())
                     .getSingleResult()
                     .intValue();
 
+            //total number of seats
             int allSeats = em.createQuery("SELECT COUNT(s) FROM Seat s WHERE s.date = :date", Long.class)
                     .setParameter("date", bookingRequestDTO.getDate())
                     .getSingleResult()
@@ -446,7 +448,7 @@ Get the booking by the cookie param
 
             em.getTransaction().begin();
 
-            Concert concert = em.find(Concert.class, infoDTO.getConcertId(), LockModeType.PESSIMISTIC_READ);
+            Concert concert = em.find(Concert.class, infoDTO.getConcertId(), LockModeType.PESSIMISTIC_READ); //get the concert with the specific concertId
 
             if (concert == null || concert.getDates().contains(infoDTO.getDate())) {
                 response.resume(Response.status(Response.Status.BAD_REQUEST).build());
@@ -469,9 +471,9 @@ Get the booking by the cookie param
     }
 
 
-    public void alertSubscribers(int availableNumberOfSeats, int totalNumberOfSeats, long concertId, LocalDateTime date){
+    public void alertSubscribers(int availableSeats, int totalSeats, long concertId, LocalDateTime date){
         List<Subscription> subscriberList = subscribersMap.get(concertId);
-        int amountbooked = 100 - (int)(((double)availableNumberOfSeats / NUM_SEATS_IN_THEATRE) * 100);
+        int amountbooked = 100 - (int)(((double)availableSeats / NUM_SEATS_IN_THEATRE) * 100); //percentage of booked seats
         if (subscriberList == null) {
             return;
         }
@@ -485,15 +487,13 @@ Get the booking by the cookie param
                     AsyncResponse response = subscriber.getResponse();
 
                     synchronized (response) {
-                        ConcertInfoNotificationDTO notification = new ConcertInfoNotificationDTO(availableNumberOfSeats);
+                        ConcertInfoNotificationDTO notification = new ConcertInfoNotificationDTO(availableSeats);
                         response.resume(Response.ok(notification).build());
                     }
-                } else {
-                    newSubscriptions.add(subscriber);
                 }
-            } else {
-                newSubscriptions.add(subscriber);
             }
+            newSubscriptions.add(subscriber);
+
         }
         subscribersMap.put(concertId, newSubscriptions);
     }
