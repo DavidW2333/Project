@@ -276,8 +276,8 @@ retrieve all the performers
         try {
             em.getTransaction().begin();
 
-            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
-                    .setParameter("cookie", cookieId.getValue());
+            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class);
+            userQuery.setParameter("cookie", cookieId.getValue());
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
             // when user is not authenticated
             if (user == null ) {
@@ -302,20 +302,20 @@ retrieve all the performers
             seatQuery.setParameter("label", bookingRequestDTO.getSeatLabels());
             seatQuery.setParameter("date", bookingRequestDTO.getDate());
             seatQuery.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-            List<Seat> freeRequestedSeats = seatQuery.getResultList();
+            List<Seat> freeSeat = seatQuery.getResultList();
 
-            if (freeRequestedSeats.size() != bookingRequestDTO.getSeatLabels().size()) {
+            if (freeSeat.size() != bookingRequestDTO.getSeatLabels().size()) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
 
-            Set<Seat> seatsSet = new HashSet<>();
+            Set<Seat> seatSet = new HashSet<>();
 
-            for (Seat s : freeRequestedSeats) {
+            for (Seat s : freeSeat) {
                 s.setBooked(true);
-                seatsSet.add(s);
+                seatSet.add(s);
             }
 
-            Booking booking = new Booking(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate(), seatsSet, user);
+            Booking booking = new Booking(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate(), seatSet, user);
             em.persist(booking);
 
             int freeSeats = em.createQuery("SELECT COUNT(s) FROM Seat s WHERE s.date = :date AND s.isBooked = false", Long.class)
@@ -362,8 +362,8 @@ retrieve all the performers
             em.getTransaction().commit();
             //get the user
 
-            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
-                    .setParameter("cookie", cookieId.getValue());
+            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class);
+            userQuery.setParameter("cookie", cookieId.getValue());
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
 
             if (user == null) {
@@ -403,15 +403,16 @@ Get the booking by the cookie param
         try {
             em.getTransaction().begin();
 
-            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
-                    .setParameter("cookie", cookieId.getValue());
+            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class);
+            userQuery.setParameter("cookie", cookieId.getValue());
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
 
             if (user == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
-            TypedQuery<Booking> bookingTypedQuery = em.createQuery("select b from Booking b where b.user =: user", Booking.class).setParameter("user", user);
+            TypedQuery<Booking> bookingTypedQuery = em.createQuery("select b from Booking b where b.user =: user", Booking.class);
+            bookingTypedQuery.setParameter("user", user);
             List<Booking> bookingList = bookingTypedQuery.getResultList();
             for (Booking booking : bookingList) {
                 dtoBookList.add(BookingMapper.toDTO(booking));
@@ -434,8 +435,8 @@ Get the booking by the cookie param
         EntityManager em = p.createEntityManager();
 
         try {
-            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class)
-                    .setParameter("cookie", cookieId.getValue()); //get the user
+            TypedQuery<User> userQuery = em.createQuery("select u from User u where u.cookie = :cookie", User.class);
+            userQuery.setParameter("cookie", cookieId.getValue()); //get the user
             User user = userQuery.getResultList().stream().findFirst().orElse(null);
 
             if (user == null) {
@@ -504,15 +505,15 @@ Get the booking by the cookie param
 
 class Subscription {
 
-    private ConcertInfoSubscriptionDTO concertInfoSubscriptionDTO;
+    private ConcertInfoSubscriptionDTO concertSubscriptionDTO;
     private AsyncResponse response;
 
-    public Subscription(ConcertInfoSubscriptionDTO concertInfoSubscriptionDTO, AsyncResponse response){
-        this.concertInfoSubscriptionDTO = concertInfoSubscriptionDTO;
+    public Subscription(ConcertInfoSubscriptionDTO concertSubscriptionDTO, AsyncResponse response){
+        this.concertSubscriptionDTO = concertSubscriptionDTO;
         this.response = response;
     }
 
     public AsyncResponse getResponse(){ return this.response; }
-    public ConcertInfoSubscriptionDTO getConcertInfoSubscriptionDTO(){ return this.concertInfoSubscriptionDTO; }
+    public ConcertInfoSubscriptionDTO getConcertInfoSubscriptionDTO(){ return this.concertSubscriptionDTO; }
 
 }
