@@ -459,7 +459,7 @@ Get the booking by the cookie param
                 subscribersMap.put(infoDTO.getConcertId(), new LinkedList<>());
             }
         }
-        subscribersMap.get(infoDTO.getDate()).add(new Subscription(infoDTO, response));
+        subscribersMap.get(infoDTO.getConcertId()).add(new Subscription(infoDTO, response));
 
     }
 
